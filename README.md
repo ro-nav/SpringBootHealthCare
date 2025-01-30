@@ -88,8 +88,6 @@ Below are the screenshots of **Postman API testing**:
 ### **9. Delete a Patient**
 ![Get All Patients](images/Delete_a_Patient.png)
 
-*(Make sure to place your images inside an `images/` folder in the project directory)*
-
 ---
 
 ## Setup Instructions
