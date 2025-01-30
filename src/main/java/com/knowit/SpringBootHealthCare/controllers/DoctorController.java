@@ -3,25 +3,46 @@ package com.knowit.SpringBootHealthCare.controllers;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
-import com.knowit.SpringBootHealthCare.enitites.Doctor;
+import com.knowit.SpringBootHealthCare.entities.Doctor;
 import com.knowit.SpringBootHealthCare.services.DoctorService;
 
-@CrossOrigin(origins = "http://localhost:3000")
 @RestController
+@RequestMapping("/doctors")
 public class DoctorController {
 
-    @Autowired
-    DoctorService dservice;
+    private final DoctorService dservice;
 
-    @GetMapping("/doctors/{exp}/{spec}")
-    public List<Doctor> getDoctors(@PathVariable int exp, @PathVariable String spec) {
-//	List<Doctor> doctors = dservice.getDoctors(exp, spec);
-	return dservice.getDoctors(exp, spec);
+    @Autowired
+    public DoctorController(DoctorService dservice) {
+	this.dservice = dservice;
     }
 
+    @GetMapping("/getAll")
+    public ResponseEntity<List<Doctor>> getAllDoctors() {
+	return ResponseEntity.ok(dservice.getAllDoctors());
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Doctor> getOneDoctor(@PathVariable int id) {
+	return ResponseEntity.ok(dservice.getOneDoctor(id));
+    }
+
+    @GetMapping("/filter/{exp}/{spec}")
+    public ResponseEntity<List<Doctor>> getDoctors(@PathVariable int exp, @PathVariable String spec) {
+	return ResponseEntity.ok(dservice.getDoctors(exp, spec));
+    }
+
+    @PostMapping("/save")
+    public ResponseEntity<Doctor> saveDoctor(@RequestBody Doctor d) {
+	return new ResponseEntity<>(dservice.saveDoctor(d), HttpStatus.CREATED);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deleteDoctor(@PathVariable int id) {
+	return ResponseEntity.ok(dservice.deleteDoctor(id));
+    }
 }

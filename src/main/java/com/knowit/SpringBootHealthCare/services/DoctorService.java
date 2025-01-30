@@ -5,34 +5,50 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.knowit.SpringBootHealthCare.enitites.Doctor;
+import com.knowit.SpringBootHealthCare.entities.Doctor;
+import com.knowit.SpringBootHealthCare.exceptions.DoctorNotFoundException;
+import com.knowit.SpringBootHealthCare.exceptions.InvalidDoctorDataException;
 import com.knowit.SpringBootHealthCare.repositories.DoctorRepository;
 
 @Service
 public class DoctorService {
 
+    private final DoctorRepository drepo;
+
     @Autowired
-    DoctorRepository drepo;
+    public DoctorService(DoctorRepository drepo) {
+	this.drepo = drepo;
+    }
+
+    public List<Doctor> getAllDoctors() {
+	return drepo.findAll();
+    }
+
+    public Doctor getOneDoctor(int doctor_id) {
+	return drepo.findById(doctor_id)
+		.orElseThrow(() -> new DoctorNotFoundException("Doctor not found with ID: " + doctor_id));
+    }
 
     public List<Doctor> getDoctors(int exp, String spec) {
-	return drepo.getDoctor(exp, spec);
+	List<Doctor> doctors = drepo.getDoctor(exp, spec);
+	if (doctors.isEmpty()) {
+	    throw new DoctorNotFoundException("No doctors found with " + exp + " years of experience in " + spec);
+	}
+	return doctors;
     }
 
-    public Doctor getOne(int doctor_id) {
-	return drepo.findById(doctor_id)
-		.orElseThrow(() -> new RuntimeException("Topic not found with ID: " + doctor_id));
-    }
-
-    public Doctor save(Doctor d) {
+    public Doctor saveDoctor(Doctor d) {
+	if (d.getName() == null || d.getSpecialization() == null) {
+	    throw new InvalidDoctorDataException("Doctor name and specialization cannot be null.");
+	}
 	return drepo.save(d);
     }
 
-    public String delete(int doctor_id) {
+    public String deleteDoctor(int doctor_id) {
 	if (!drepo.existsById(doctor_id)) {
-	    throw new RuntimeException("Doctor not found with ID: " + doctor_id);
+	    throw new DoctorNotFoundException("Doctor not found with ID: " + doctor_id);
 	}
 	drepo.deleteById(doctor_id);
-	return "Doctor and associated patients deleted successfully.";
+	return "Doctor with ID " + doctor_id + " has been deleted successfully.";
     }
-
 }

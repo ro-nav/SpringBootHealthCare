@@ -3,45 +3,54 @@ package com.knowit.SpringBootHealthCare.controllers;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
-import com.knowit.SpringBootHealthCare.enitites.Doctor;
-import com.knowit.SpringBootHealthCare.enitites.Patient;
-import com.knowit.SpringBootHealthCare.enitites.PatientDummy;
+import com.knowit.SpringBootHealthCare.entities.Doctor;
+import com.knowit.SpringBootHealthCare.entities.Patient;
+import com.knowit.SpringBootHealthCare.entities.PatientDummy;
+import com.knowit.SpringBootHealthCare.exceptions.InvalidPatientDataException;
 import com.knowit.SpringBootHealthCare.services.DoctorService;
 import com.knowit.SpringBootHealthCare.services.PatientService;
 
-@CrossOrigin(origins = "http://localhost:3000")
 @RestController
+@RequestMapping("/patients")
 public class PatientController {
 
-    @Autowired
-    DoctorService dservice;
+    private final DoctorService dservice;
+    private final PatientService pservice;
 
     @Autowired
-    PatientService pservice;
-
-    @GetMapping("/getPatient")
-    public List<Patient> getAll() {
-	return pservice.getAll();
+    public PatientController(DoctorService dservice, PatientService pservice) {
+	this.dservice = dservice;
+	this.pservice = pservice;
     }
 
-    @PostMapping("/savePatient")
-    public Patient savePatient(@RequestBody PatientDummy pd) {
+    @GetMapping("/getAll")
+    public ResponseEntity<List<Patient>> getAllPatients() {
+	return ResponseEntity.ok(pservice.getAllPatients());
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Patient> getOnePatient(@PathVariable int id) {
+	return ResponseEntity.ok(pservice.getOnePatient(id));
+    }
+
+    @PostMapping("/save")
+    public ResponseEntity<Patient> savePatient(@RequestBody PatientDummy pd) {
 	Doctor doctor = pd.getDoctor();
 	Doctor existingDoctor;
 
 	try {
-	    existingDoctor = dservice.getOne(doctor.getDoctor_id());
+	    existingDoctor = dservice.getOneDoctor(doctor.getDoctor_id());
 	} catch (RuntimeException e) {
-	    // TODO: handle exception
-	    existingDoctor = dservice.save(new Doctor(doctor.getDoctor_id(), doctor.getName(), doctor.getDegree(),
+	    existingDoctor = dservice.saveDoctor(new Doctor(doctor.getDoctor_id(), doctor.getName(), doctor.getDegree(),
 		    doctor.getSpecialization(), doctor.getExperience()));
+	}
+
+	if (pd.getFname() == null || pd.getLname() == null) {
+	    throw new InvalidPatientDataException("First name and last name cannot be null.");
 	}
 
 	Patient patient = new Patient();
@@ -51,13 +60,11 @@ public class PatientController {
 	patient.setContact(pd.getContact());
 	patient.setDoctor(existingDoctor);
 
-	return pservice.save(patient);
-
+	return new ResponseEntity<>(pservice.savePatient(patient), HttpStatus.CREATED);
     }
 
-    @GetMapping("/deletepatient")
-    public void deletePatient(@RequestParam int pid) {
-	dservice.delete(pid);
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deletePatient(@PathVariable int id) {
+	return ResponseEntity.ok(pservice.deletePatient(id));
     }
-
 }
